@@ -77,11 +77,17 @@
 			<artifactId>ejb-api</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>jakarta.ws.rs</groupId>
+			<artifactId>jakarta.ws.rs-api</artifactId>
+			<version>3.0.0</version>
+			<scope>compile</scope>
+		</dependency>
+		<!-- <dependency>
 			<groupId>javax.ws.rs</groupId>
 			<artifactId>jsr311-api</artifactId>
 			<version>1.1.1</version>
 			<scope>compile</scope>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>

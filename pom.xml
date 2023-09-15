@@ -959,7 +959,7 @@
 		<okhttp_version>4.10.0</okhttp_version>
 		<poi_version>4.1.2</poi_version>
 		<poi_ooxml_schemas_version>1.4</poi_ooxml_schemas_version>
-		<resteasy_version>5.0.2.Final</resteasy_version>
+		<resteasy_version>6.0.3.Final</resteasy_version>
 		<ph_schematron_version>5.6.5</ph_schematron_version>
 		<ph_commons_version>9.5.4</ph_commons_version>
 		<plexus_compiler_api_version>2.9.0</plexus_compiler_api_version>
@@ -1760,11 +1760,24 @@
 				<artifactId>jersey-media-moxy</artifactId>
 				<version>${jersey_version}</version>
 			</dependency>
-			<dependency>
+			<!-- <dependency>
 				<groupId>org.jboss.spec.javax.ws.rs</groupId>
 				<artifactId>jboss-jaxrs-api_2.1_spec</artifactId>
 				<version>2.0.1.Final</version>
+			</dependency> -->
+			<dependency>
+				<groupId>jakarta.ws.rs</groupId>
+				<artifactId>jakarta.ws.rs-api</artifactId>
+				<version>3.0.0</version>
+				<scope>compile</scope>
+			</dependency>	
+			<!-- https://mvnrepository.com/artifact/org.jboss.resteasy/resteasy-jaxrs -->
+			<dependency>
+				<groupId>org.jboss.resteasy</groupId>
+				<artifactId>resteasy-jaxrs</artifactId>
+				<version>4.0.0.Beta5</version>
 			</dependency>
+
 			<dependency>
 				<groupId>org.jboss.resteasy</groupId>
 				<artifactId>resteasy-client</artifactId>

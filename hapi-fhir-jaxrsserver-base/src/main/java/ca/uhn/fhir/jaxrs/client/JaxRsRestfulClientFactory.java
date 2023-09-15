@@ -25,11 +25,11 @@ import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.client.api.Header;
 import ca.uhn.fhir.rest.client.api.IHttpClient;
 import ca.uhn.fhir.rest.client.impl.RestfulClientFactory;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
 
 import java.util.List;
 import java.util.Map;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 
 /**
  * A Restful Client Factory, based on Jax Rs

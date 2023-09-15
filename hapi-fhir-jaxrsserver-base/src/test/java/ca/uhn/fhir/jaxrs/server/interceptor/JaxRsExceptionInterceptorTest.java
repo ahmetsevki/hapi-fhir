@@ -10,7 +10,7 @@ import java.util.HashMap;
 
 import javax.interceptor.InvocationContext;
 import javax.servlet.ServletException;
-import javax.ws.rs.core.*;
+import jakarta.ws.rs.core.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

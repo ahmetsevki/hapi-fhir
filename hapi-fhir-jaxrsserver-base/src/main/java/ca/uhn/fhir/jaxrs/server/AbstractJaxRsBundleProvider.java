@@ -31,15 +31,15 @@ import ca.uhn.fhir.rest.api.*;
 import ca.uhn.fhir.rest.server.IPagingProvider;
 import ca.uhn.fhir.rest.server.interceptor.IServerInterceptor;
 import ca.uhn.fhir.rest.server.method.BaseMethodBinding;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.*;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import javax.interceptor.Interceptors;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.*;
 
 /**
  * This server is the abstract superclass for all bundle providers. It exposes
