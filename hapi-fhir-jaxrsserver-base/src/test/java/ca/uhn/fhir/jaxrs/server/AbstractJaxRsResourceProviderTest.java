@@ -439,7 +439,7 @@ public class AbstractJaxRsResourceProviderTest {
 		context.setContextPath("/");
 		jettyServer = new Server(0);
 		jettyServer.setHandler(context);
-		ServletHolder jerseyServlet = context.addServlet(org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher.class, "/*");
+		ServletHolder jerseyServlet = context.addServlet(org.eclipse.jetty.servlet.DefaultServlet.class, "/*");
 		jerseyServlet.setInitOrder(0);
 
 		//@formatter:off

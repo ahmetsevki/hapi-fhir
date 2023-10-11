@@ -36,6 +36,7 @@ import org.hl7.fhir.dstu3.model.StringType;
 import org.hl7.fhir.instance.model.api.IBaseOperationOutcome;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
+import org.glassfish.jersey.servlet.ServletContainer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -465,7 +466,8 @@ public class AbstractJaxRsResourceProviderDstu3Test {
 		context.setContextPath("/");
 		jettyServer = new Server(0);
 		jettyServer.setHandler(context);
-		ServletHolder jerseyServlet = context.addServlet(HttpServletDispatcher.class, "/*");
+		ServletHolder jerseyServlet = context.addServlet(org.eclipse.jetty.servlet.DefaultServlet.class, "/*");
+		
 		jerseyServlet.setInitOrder(0);
 
 		//@formatter:off
