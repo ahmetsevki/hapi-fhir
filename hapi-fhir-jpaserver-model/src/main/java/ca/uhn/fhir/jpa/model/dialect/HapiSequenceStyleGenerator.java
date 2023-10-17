@@ -19,7 +19,6 @@
  */
 package ca.uhn.fhir.jpa.model.dialect;
 
-import ca.uhn.fhir.jpa.model.entity.StorageSettings;
 import ca.uhn.fhir.jpa.util.ISequenceValueMassager;
 import org.apache.commons.lang3.Validate;
 import org.hibernate.HibernateException;
@@ -37,7 +36,6 @@ import org.hibernate.id.enhanced.SequenceStyleGenerator;
 import org.hibernate.id.enhanced.StandardOptimizerDescriptor;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.Type;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.Serializable;
 import java.util.Properties;
@@ -51,10 +49,6 @@ public class HapiSequenceStyleGenerator
 		implements PersistentIdentifierGenerator, BulkInsertionCapableIdentifierGenerator, ExportableProducer {
 	public static final String ID_MASSAGER_TYPE_KEY = "hapi_fhir.sequence_generator_massager";
 	private final SequenceStyleGenerator myGen = new SequenceStyleGenerator();
-
-	@Autowired
-	private StorageSettings myStorageSettings;
-
 	private ISequenceValueMassager myIdMassager;
 	private boolean myConfigured;
 	private String myGeneratorName;
