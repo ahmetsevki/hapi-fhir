@@ -136,7 +136,6 @@ public class HapiTransactionService implements IHapiTransactionService {
 	 * @deprecated Use {@link #withRequest(RequestDetails)} with fluent call instead
 	 */
 	@Deprecated
-	@Override
 	public <T> T withRequest(
 			@Nullable RequestDetails theRequestDetails,
 			@Nullable TransactionDetails theTransactionDetails,
