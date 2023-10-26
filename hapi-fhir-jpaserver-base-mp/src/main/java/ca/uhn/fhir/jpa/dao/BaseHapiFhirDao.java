@@ -28,7 +28,6 @@ import ca.uhn.fhir.context.RuntimeChildResourceDefinition;
 import ca.uhn.fhir.context.RuntimeResourceDefinition;
 import ca.uhn.fhir.i18n.Msg;
 import ca.uhn.fhir.interceptor.api.HookParams;
-import ca.uhn.fhir.interceptor.api.IInterceptorBroadcaster;
 import ca.uhn.fhir.interceptor.api.Pointcut;
 import ca.uhn.fhir.interceptor.model.RequestPartitionId;
 import ca.uhn.fhir.jpa.api.config.JpaStorageSettings;
@@ -53,6 +52,7 @@ import ca.uhn.fhir.jpa.model.entity.ResourceTag;
 import ca.uhn.fhir.jpa.model.entity.TagDefinition;
 import ca.uhn.fhir.jpa.model.entity.TagTypeEnum;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
+import ca.uhn.fhir.jpa.util.IPersistenceContextProvider;
 import ca.uhn.fhir.model.api.IResource;
 import ca.uhn.fhir.model.api.ResourceMetadataKeyEnum;
 import ca.uhn.fhir.model.api.Tag;
@@ -76,13 +76,14 @@ import ca.uhn.fhir.util.XmlUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.PersistenceContextType;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -149,7 +150,9 @@ public abstract class BaseHapiFhirDao<T extends IBaseResource> extends BaseStora
 	private static boolean ourValidationDisabledForUnitTest;
 	private static boolean ourDisableIncrementOnUpdateForUnitTest = false;
 
-	@PersistenceContext(type = PersistenceContextType.TRANSACTION)
+	@Inject
+	private IPersistenceContextProvider myEntityManagerProvider;
+
 	protected EntityManager myEntityManager;
 
 	@Inject
@@ -165,25 +168,18 @@ public abstract class BaseHapiFhirDao<T extends IBaseResource> extends BaseStora
 	protected IResourceTableDao myResourceTableDao;
 
 	@Inject
-	protected IInterceptorBroadcaster myInterceptorBroadcaster;
-
-	@Inject
 	protected IJpaStorageResourceParser myJpaStorageResourceParser;
 
 	@Inject
 	protected PartitionSettings myPartitionSettings;
 
+	@Inject
 	private FhirContext myContext;
 
 	@Inject
 	BeanManager myApplicationContext;
 
 	protected final CodingSpy myCodingSpy = new CodingSpy();
-
-	@Override
-	protected IInterceptorBroadcaster getInterceptorBroadcaster() {
-		return myInterceptorBroadcaster;
-	}
 
 	protected BeanManager getApplicationContext() {
 		return myApplicationContext;
@@ -351,11 +347,12 @@ public abstract class BaseHapiFhirDao<T extends IBaseResource> extends BaseStora
 		return myContext;
 	}
 
-	@Inject
-	public void setContext(FhirContext theContext) {
-		super.myFhirContext = theContext;
-		myContext = theContext;
-	}
+	// ian: Is this needed?
+	//	@Inject
+	//	public void setContext(FhirContext theContext) {
+	//		super.myFhirContext = theContext;
+	//		myContext = theContext;
+	//	}
 
 	/**
 	 * <code>null</code> will only be returned if the scheme and tag are both blank
@@ -395,6 +392,7 @@ public abstract class BaseHapiFhirDao<T extends IBaseResource> extends BaseStora
 		// repeating (on any failure) 10 times.
 		// if it fails more than this, we will throw exceptions
 		EntityTransaction tx = myEntityManager.getTransaction();
+		tx.begin();
 		TagDefinition val = new TagDefinition(theTagType, theScheme, theTerm, theLabel);
 		val.setVersion(theVersion);
 		val.setUserSelected(theUserSelected);
@@ -468,10 +466,54 @@ public abstract class BaseHapiFhirDao<T extends IBaseResource> extends BaseStora
 		boolean changed = false;
 
 		if (theEntity.getDeleted() == null) {
+			if (thePerformIndexing) {
 
-			encoding = null;
-			resourceBinary = null;
-			resourceText = null;
+				// ian: removed external address resolution
+
+				encoding = myStorageSettings.getResourceEncoding();
+
+				String resourceType = theEntity.getResourceType();
+
+				List<String> excludeElements = new ArrayList<>(8);
+				IBaseMetaType meta = theResource.getMeta();
+
+				IBaseExtension<?, ?> sourceExtension = getExcludedElements(resourceType, excludeElements, meta);
+
+				theEntity.setFhirVersion(myContext.getVersion().getVersion());
+
+				HashFunction sha256 = Hashing.sha256();
+				HashCode hashCode;
+				String encodedResource = encodeResource(theResource, encoding, excludeElements, myContext);
+				if (myStorageSettings.getInlineResourceTextBelowSize() > 0
+						&& encodedResource.length() < myStorageSettings.getInlineResourceTextBelowSize()) {
+					resourceText = encodedResource;
+					resourceBinary = null;
+					encoding = ResourceEncodingEnum.JSON;
+					hashCode = sha256.hashUnencodedChars(encodedResource);
+				} else {
+					resourceText = null;
+					resourceBinary = getResourceBinary(encoding, encodedResource);
+					hashCode = sha256.hashBytes(resourceBinary);
+				}
+
+				String hashSha256 = hashCode.toString();
+				if (!hashSha256.equals(theEntity.getHashSha256())) {
+					changed = true;
+				}
+				theEntity.setHashSha256(hashSha256);
+
+				if (sourceExtension != null) {
+					IBaseExtension<?, ?> newSourceExtension = ((IBaseHasExtensions) meta).addExtension();
+					newSourceExtension.setUrl(sourceExtension.getUrl());
+					newSourceExtension.setValue(sourceExtension.getValue());
+				}
+
+			} else {
+
+				encoding = null;
+				resourceBinary = null;
+				resourceText = null;
+			}
 
 			boolean skipUpdatingTags = myStorageSettings.isMassIngestionMode() && theEntity.isHasTags();
 			skipUpdatingTags |= myStorageSettings.getTagStorageMode() == JpaStorageSettings.TagStorageModeEnum.INLINE;
@@ -482,6 +524,7 @@ public abstract class BaseHapiFhirDao<T extends IBaseResource> extends BaseStora
 
 		} else {
 
+			// if - theEntity.getDeleted() != null
 			if (nonNull(theEntity.getHashSha256())) {
 				theEntity.setHashSha256(null);
 				changed = true;
@@ -849,6 +892,8 @@ public abstract class BaseHapiFhirDao<T extends IBaseResource> extends BaseStora
 			// CREATE or UPDATE
 			entity.setDeleted(null);
 			// TODO: is this IF statement always true? Try removing it
+			// IAN: thePerformIndexing is not serch indexing, it is creating the hashcode for the entity and encoding
+			// it.
 			if (thePerformIndexing || theEntity.getVersion() == 1) {
 
 				RequestPartitionId requestPartitionId;
@@ -1398,6 +1443,7 @@ public abstract class BaseHapiFhirDao<T extends IBaseResource> extends BaseStora
 
 	@PostConstruct
 	public void start() {
+		this.myEntityManager = myEntityManagerProvider.getEntityManager();
 		// nothing yet
 	}
 

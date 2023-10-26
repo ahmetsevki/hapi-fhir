@@ -46,7 +46,7 @@ public abstract class BaseJpaResourceProvider<T extends IBaseResource> extends A
 		}
 	}
 
-	@Read(version = true)
+	@Read
 	public T read(@IdParam IIdType theId) {
 		return myDao.read(theId);
 	}

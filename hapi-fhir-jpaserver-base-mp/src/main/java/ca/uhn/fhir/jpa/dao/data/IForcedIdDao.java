@@ -21,18 +21,18 @@ package ca.uhn.fhir.jpa.dao.data;
 
 import ca.uhn.fhir.jpa.dao.data.custom.IForcedIdQueries;
 import ca.uhn.fhir.jpa.model.entity.ForcedId;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 
 import java.util.*;
 
+@RequestScoped
 public class IForcedIdDao extends BaseDao<ForcedId> implements IForcedIdQueries {
 
-	@PersistenceContext
-	private EntityManager entityManager;
-
-	public IForcedIdDao() {
-		super(ForcedId.class);
+	@Inject
+	public IForcedIdDao(EntityManager entityManager) {
+		super(ForcedId.class, entityManager);
 	}
 
 	public List<ForcedId> findAllByResourcePid(List<Long> theResourcePids) {

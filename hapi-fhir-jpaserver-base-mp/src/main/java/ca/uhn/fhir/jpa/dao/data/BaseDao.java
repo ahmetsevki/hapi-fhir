@@ -1,20 +1,18 @@
 package ca.uhn.fhir.jpa.dao.data;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.PersistenceContext;
 
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public class BaseDao<T> implements IHapiFhirJpaRepository {
-	@PersistenceContext
+
 	protected EntityManager entityManager;
 
 	final Class<T> typeParameterClass;
 
-	public BaseDao(Class<T> typeParameterClass) {
+	public BaseDao(Class<T> typeParameterClass, EntityManager entityManager) {
 		this.typeParameterClass = typeParameterClass;
+		this.entityManager = entityManager;
 	}
 
 	public Optional<T> findById(Long id) {
@@ -22,18 +20,6 @@ public class BaseDao<T> implements IHapiFhirJpaRepository {
 	}
 
 	public void save(T t) {
-		executeInsideTransaction(entityManager -> entityManager.persist(t));
-	}
-
-	private void executeInsideTransaction(Consumer<EntityManager> action) {
-		EntityTransaction tx = entityManager.getTransaction();
-		try {
-			tx.begin();
-			action.accept(entityManager);
-			tx.commit();
-		} catch (RuntimeException e) {
-			tx.rollback();
-			throw e;
-		}
+		entityManager.persist(t);
 	}
 }

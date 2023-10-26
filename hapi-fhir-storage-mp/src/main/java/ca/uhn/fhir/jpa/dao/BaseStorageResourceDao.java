@@ -23,22 +23,16 @@ import ca.uhn.fhir.i18n.Msg;
 import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
 import ca.uhn.fhir.jpa.api.dao.IJpaDao;
 import ca.uhn.fhir.jpa.api.model.DaoMethodOutcome;
-import ca.uhn.fhir.jpa.api.model.DeleteMethodOutcome;
 import ca.uhn.fhir.jpa.model.cross.IBasePersistedResource;
 import ca.uhn.fhir.jpa.patch.FhirPatch;
 import ca.uhn.fhir.jpa.patch.JsonPatchUtils;
 import ca.uhn.fhir.jpa.patch.XmlPatchUtils;
 import ca.uhn.fhir.parser.StrictErrorHandler;
-import ca.uhn.fhir.rest.api.DeleteCascadeModeEnum;
 import ca.uhn.fhir.rest.api.PatchTypeEnum;
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-import ca.uhn.fhir.rest.api.server.storage.IDeleteExpungeJobSubmitter;
 import ca.uhn.fhir.rest.api.server.storage.IResourcePersistentId;
 import ca.uhn.fhir.rest.api.server.storage.TransactionDetails;
-import ca.uhn.fhir.rest.server.RestfulServerUtils;
-import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
-import ca.uhn.fhir.rest.server.exceptions.MethodNotAllowedException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceVersionConflictException;
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
@@ -47,8 +41,6 @@ import org.hl7.fhir.instance.model.api.IBaseParameters;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
 
-import java.util.Collections;
-import java.util.List;
 import javax.annotation.Nonnull;
 
 public abstract class BaseStorageResourceDao<T extends IBaseResource> extends BaseStorageDao
@@ -57,9 +49,6 @@ public abstract class BaseStorageResourceDao<T extends IBaseResource> extends Ba
 
 	@Inject
 	protected abstract IStorageResourceParser getStorageResourceParser();
-
-	@Inject
-	protected abstract IDeleteExpungeJobSubmitter getDeleteExpungeJobSubmitter();
 
 	@Override
 	public DaoMethodOutcome patch(
@@ -270,42 +259,6 @@ public abstract class BaseStorageResourceDao<T extends IBaseResource> extends Ba
 			throw new ResourceNotFoundException(Msg.code(935) + "Resource with ID "
 					+ theEntity.getIdDt().getIdPart() + " exists but it is not of type " + theResourceName
 					+ ", found resource of type " + theEntity.getResourceType());
-		}
-	}
-
-	protected DeleteMethodOutcome deleteExpunge(String theUrl, RequestDetails theRequest) {
-		if (!getStorageSettings().canDeleteExpunge()) {
-			throw new MethodNotAllowedException(Msg.code(963) + "_expunge is not enabled on this server: "
-					+ getStorageSettings().cannotDeleteExpungeReason());
-		}
-
-		RestfulServerUtils.DeleteCascadeDetails cascadeDelete =
-				RestfulServerUtils.extractDeleteCascadeParameter(theRequest);
-		boolean cascade = false;
-		Integer cascadeMaxRounds = null;
-		if (cascadeDelete.getMode() == DeleteCascadeModeEnum.DELETE) {
-			cascade = true;
-			cascadeMaxRounds = cascadeDelete.getMaxRounds();
-			if (cascadeMaxRounds == null) {
-				cascadeMaxRounds = myStorageSettings.getMaximumDeleteConflictQueryCount();
-			} else if (myStorageSettings.getMaximumDeleteConflictQueryCount() != null
-					&& myStorageSettings.getMaximumDeleteConflictQueryCount() < cascadeMaxRounds) {
-				cascadeMaxRounds = myStorageSettings.getMaximumDeleteConflictQueryCount();
-			}
-		}
-
-		List<String> urlsToDeleteExpunge = Collections.singletonList(theUrl);
-		try {
-			String jobId = getDeleteExpungeJobSubmitter()
-					.submitJob(
-							getStorageSettings().getExpungeBatchSize(),
-							urlsToDeleteExpunge,
-							cascade,
-							cascadeMaxRounds,
-							theRequest);
-			return new DeleteMethodOutcome(createInfoOperationOutcome("Delete job submitted with id " + jobId));
-		} catch (InvalidRequestException e) {
-			throw new InvalidRequestException(Msg.code(965) + "Invalid Delete Expunge Request: " + e.getMessage(), e);
 		}
 	}
 }

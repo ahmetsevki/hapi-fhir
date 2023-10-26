@@ -22,7 +22,6 @@ package ca.uhn.fhir.jpa.dao;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.i18n.Msg;
 import ca.uhn.fhir.interceptor.api.HookParams;
-import ca.uhn.fhir.interceptor.api.IInterceptorBroadcaster;
 import ca.uhn.fhir.interceptor.api.Pointcut;
 import ca.uhn.fhir.jpa.api.config.JpaStorageSettings;
 import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
@@ -44,16 +43,12 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceGoneException;
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
-import ca.uhn.fhir.rest.server.util.CompositeInterceptorBroadcaster;
-import ca.uhn.fhir.rest.server.util.ISearchParamRegistry;
 import ca.uhn.fhir.util.BundleUtil;
 import ca.uhn.fhir.util.FhirTerser;
-import ca.uhn.fhir.util.IMetaTagSorter;
 import ca.uhn.fhir.util.OperationOutcomeUtil;
 import ca.uhn.fhir.util.ResourceReferenceInfo;
 import ca.uhn.fhir.util.StopWatch;
 import ca.uhn.fhir.util.UrlUtil;
-import com.google.common.annotations.VisibleForTesting;
 import jakarta.inject.Inject;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseOperationOutcome;
@@ -88,9 +83,6 @@ public abstract class BaseStorageDao {
 	protected static final String MESSAGE_KEY_DELETE_RESOURCE_ALREADY_DELETED = "deleteResourceAlreadyDeleted";
 
 	@Inject
-	protected ISearchParamRegistry mySearchParamRegistry;
-
-	@Inject
 	protected FhirContext myFhirContext;
 
 	@Inject
@@ -98,14 +90,6 @@ public abstract class BaseStorageDao {
 
 	@Inject
 	protected JpaStorageSettings myStorageSettings;
-
-	@Inject
-	protected IMetaTagSorter myMetaTagSorter;
-
-	@VisibleForTesting
-	public void setSearchParamRegistry(ISearchParamRegistry theSearchParamRegistry) {
-		mySearchParamRegistry = theSearchParamRegistry;
-	}
 
 	/**
 	 * May be overridden by subclasses to validate resources prior to storage
@@ -141,8 +125,6 @@ public abstract class BaseStorageDao {
 		}
 
 		performAutoVersioning(theResource, thePerformIndexing);
-
-		myMetaTagSorter.sort(theResource.getMeta());
 	}
 
 	/**
@@ -223,10 +205,6 @@ public abstract class BaseStorageDao {
 	 * the Patient will not yet have its version number incremented, so it would be wrong
 	 * to use that value. During the second phase it is correct.
 	 * <p>
-	 * Also note that {@link BaseTransactionProcessor} also has code to do auto-versioning
-	 * and it is the one that takes care of the placeholder IDs. Look for the other caller of
-	 * {@link #extractReferencesToAutoVersion(FhirContext, StorageSettings, IBaseResource)}
-	 * to find this.
 	 */
 	private void performAutoVersioning(IBaseResource theResource, boolean thePerformIndexing) {
 		// ian: nop, we don't deal with indexing
@@ -277,8 +255,6 @@ public abstract class BaseStorageDao {
 					.add(IPreResourceAccessDetails.class, accessDetails)
 					.add(RequestDetails.class, theRequest)
 					.addIfMatchesType(ServletRequestDetails.class, theRequest);
-			CompositeInterceptorBroadcaster.doCallHooks(
-					getInterceptorBroadcaster(), theRequest, Pointcut.STORAGE_PREACCESS_RESOURCES, params);
 			if (accessDetails.isDontReturnResourceAtIndex(0)) {
 				outcome.setResource(null);
 			}
@@ -295,8 +271,6 @@ public abstract class BaseStorageDao {
 						.add(IPreResourceShowDetails.class, showDetails)
 						.add(RequestDetails.class, theRequest)
 						.addIfMatchesType(ServletRequestDetails.class, theRequest);
-				CompositeInterceptorBroadcaster.doCallHooks(
-						getInterceptorBroadcaster(), theRequest, Pointcut.STORAGE_PRESHOW_RESOURCES, params);
 				outcome.setResource(showDetails.getResource(0));
 			}
 		});
@@ -322,8 +296,6 @@ public abstract class BaseStorageDao {
 						.add(IPreResourceAccessDetails.class, accessDetails)
 						.add(RequestDetails.class, theRequest)
 						.addIfMatchesType(ServletRequestDetails.class, theRequest);
-				CompositeInterceptorBroadcaster.doCallHooks(
-						getInterceptorBroadcaster(), theRequest, Pointcut.STORAGE_PREACCESS_RESOURCES, params);
 				if (accessDetails.isDontReturnResourceAtIndex(0)) {
 					outcome.setResource(null);
 				}
@@ -340,8 +312,6 @@ public abstract class BaseStorageDao {
 							.add(IPreResourceShowDetails.class, showDetails)
 							.add(RequestDetails.class, theRequest)
 							.addIfMatchesType(ServletRequestDetails.class, theRequest);
-					CompositeInterceptorBroadcaster.doCallHooks(
-							getInterceptorBroadcaster(), theRequest, Pointcut.STORAGE_PRESHOW_RESOURCES, params);
 					outcome.setResource(showDetails.getResource(0));
 				}
 			});
@@ -355,15 +325,8 @@ public abstract class BaseStorageDao {
 			RequestDetails theRequestDetails,
 			Pointcut thePointcut,
 			HookParams theParams) {
-		if (theTransactionDetails.isAcceptingDeferredInterceptorBroadcasts(thePointcut)) {
-			theTransactionDetails.addDeferredInterceptorBroadcast(thePointcut, theParams);
-		} else {
-			CompositeInterceptorBroadcaster.doCallHooks(
-					getInterceptorBroadcaster(), theRequestDetails, thePointcut, theParams);
-		}
+		// ian: nothing
 	}
-
-	protected abstract IInterceptorBroadcaster getInterceptorBroadcaster();
 
 	public IBaseOperationOutcome createErrorOperationOutcome(String theMessage, String theCode) {
 		return createOperationOutcome(OO_SEVERITY_ERROR, theMessage, theCode);

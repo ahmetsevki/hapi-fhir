@@ -221,23 +221,23 @@ public class JaxRsRequest extends RequestDetails {
 				switch (fhirContextVersion) {
 					case R4:
 						result.setId(new org.hl7.fhir.r4.model.IdType(
-								myServer.getBaseForRequest(), UrlUtil.unescape(myId), UrlUtil.unescape(myVersion)));
+								myResourceName, UrlUtil.unescape(myId), UrlUtil.unescape(myVersion)));
 						break;
 					case DSTU3:
 						result.setId(new org.hl7.fhir.dstu3.model.IdType(
-								myServer.getBaseForRequest(), UrlUtil.unescape(myId), UrlUtil.unescape(myVersion)));
+								myResourceName, UrlUtil.unescape(myId), UrlUtil.unescape(myVersion)));
 						break;
 					case DSTU2_1:
 						result.setId(new org.hl7.fhir.dstu2016may.model.IdType(
-								myServer.getBaseForRequest(), UrlUtil.unescape(myId), UrlUtil.unescape(myVersion)));
+								myResourceName, UrlUtil.unescape(myId), UrlUtil.unescape(myVersion)));
 						break;
 					case DSTU2_HL7ORG:
 						result.setId(new org.hl7.fhir.dstu2.model.IdType(
-								myServer.getBaseForRequest(), UrlUtil.unescape(myId), UrlUtil.unescape(myVersion)));
+								myResourceName, UrlUtil.unescape(myId), UrlUtil.unescape(myVersion)));
 						break;
 					case DSTU2:
 						result.setId(new ca.uhn.fhir.model.primitive.IdDt(
-								myServer.getBaseForRequest(), UrlUtil.unescape(myId), UrlUtil.unescape(myVersion)));
+								myResourceName, UrlUtil.unescape(myId), UrlUtil.unescape(myVersion)));
 						break;
 					default:
 						throw new ConfigurationException(
@@ -246,24 +246,19 @@ public class JaxRsRequest extends RequestDetails {
 			} else if (StringUtils.isNotBlank(myId)) {
 				switch (fhirContextVersion) {
 					case R4:
-						result.setId(
-								new org.hl7.fhir.r4.model.IdType(myServer.getBaseForRequest(), UrlUtil.unescape(myId)));
+						result.setId(new org.hl7.fhir.r4.model.IdType(myResourceName, UrlUtil.unescape(myId)));
 						break;
 					case DSTU3:
-						result.setId(new org.hl7.fhir.dstu3.model.IdType(
-								myServer.getBaseForRequest(), UrlUtil.unescape(myId)));
+						result.setId(new org.hl7.fhir.dstu3.model.IdType(myResourceName, UrlUtil.unescape(myId)));
 						break;
 					case DSTU2_1:
-						result.setId(new org.hl7.fhir.dstu2016may.model.IdType(
-								myServer.getBaseForRequest(), UrlUtil.unescape(myId)));
+						result.setId(new org.hl7.fhir.dstu2016may.model.IdType(myResourceName, UrlUtil.unescape(myId)));
 						break;
 					case DSTU2_HL7ORG:
-						result.setId(new org.hl7.fhir.dstu2.model.IdType(
-								myServer.getBaseForRequest(), UrlUtil.unescape(myId)));
+						result.setId(new org.hl7.fhir.dstu2.model.IdType(myResourceName, UrlUtil.unescape(myId)));
 						break;
 					case DSTU2:
-						result.setId(new ca.uhn.fhir.model.primitive.IdDt(
-								myServer.getBaseForRequest(), UrlUtil.unescape(myId)));
+						result.setId(new ca.uhn.fhir.model.primitive.IdDt(myResourceName, UrlUtil.unescape(myId)));
 						break;
 					default:
 						throw new ConfigurationException(

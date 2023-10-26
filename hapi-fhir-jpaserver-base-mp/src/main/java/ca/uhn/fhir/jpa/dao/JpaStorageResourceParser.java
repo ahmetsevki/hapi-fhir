@@ -49,8 +49,8 @@ import ca.uhn.fhir.parser.DataFormatException;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.parser.LenientErrorHandler;
 import ca.uhn.fhir.rest.api.Constants;
-import ca.uhn.fhir.util.IMetaTagSorter;
 import ca.uhn.fhir.util.MetaUtil;
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IAnyResource;
@@ -72,6 +72,7 @@ import static ca.uhn.fhir.jpa.dao.BaseHapiFhirDao.decodeResource;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
+@RequestScoped
 public class JpaStorageResourceParser implements IJpaStorageResourceParser {
 	public static final LenientErrorHandler LENIENT_ERROR_HANDLER = new LenientErrorHandler(false).disableAllErrors();
 	private static final Logger ourLog = LoggerFactory.getLogger(JpaStorageResourceParser.class);
@@ -88,8 +89,8 @@ public class JpaStorageResourceParser implements IJpaStorageResourceParser {
 	@Inject
 	private PartitionSettings myPartitionSettings;
 
-	@Inject
-	IMetaTagSorter myMetaTagSorter;
+	//	@Inject
+	//	IMetaTagSorter myMetaTagSorter;
 
 	@Override
 	public IBaseResource toResource(IBasePersistedResource theEntity, boolean theForHistoryOperation) {
@@ -223,7 +224,7 @@ public class JpaStorageResourceParser implements IJpaStorageResourceParser {
 		populateResourcePartitionInformation(theEntity, retVal);
 
 		// 8. sort tags, security labels and profiles
-		myMetaTagSorter.sort(retVal.getMeta());
+		// myMetaTagSorter.sort(retVal.getMeta());
 
 		return retVal;
 	}

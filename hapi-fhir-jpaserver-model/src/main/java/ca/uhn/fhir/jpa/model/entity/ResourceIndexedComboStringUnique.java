@@ -28,7 +28,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.hl7.fhir.instance.model.api.IIdType;
 
-@Entity()
+@Entity
 @Table(
 		name = "HFJ_IDX_CMP_STRING_UNIQ",
 		indexes = {

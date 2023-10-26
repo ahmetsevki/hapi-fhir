@@ -27,7 +27,6 @@ import ca.uhn.fhir.interceptor.api.IInterceptorBroadcaster;
 import ca.uhn.fhir.interceptor.api.Pointcut;
 import ca.uhn.fhir.interceptor.model.RequestPartitionId;
 import ca.uhn.fhir.jpa.api.config.JpaStorageSettings;
-import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
 import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
 import ca.uhn.fhir.jpa.api.model.DaoMethodOutcome;
 import ca.uhn.fhir.jpa.api.svc.IIdHelperService;
@@ -54,7 +53,6 @@ import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.api.server.SimplePreResourceAccessDetails;
 import ca.uhn.fhir.rest.api.server.SimplePreResourceShowDetails;
 import ca.uhn.fhir.rest.api.server.SystemRequestDetails;
-import ca.uhn.fhir.rest.api.server.storage.IDeleteExpungeJobSubmitter;
 import ca.uhn.fhir.rest.api.server.storage.IResourcePersistentId;
 import ca.uhn.fhir.rest.api.server.storage.TransactionDetails;
 import ca.uhn.fhir.rest.server.IPagingProvider;
@@ -74,10 +72,7 @@ import ca.uhn.fhir.validation.ValidationOptions;
 import ca.uhn.fhir.validation.ValidationResult;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.spi.CreationalContext;
-import jakarta.enterprise.inject.spi.Bean;
-import jakarta.enterprise.inject.spi.BeanManager;
-import jakarta.inject.Inject;
+import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 import org.apache.commons.lang3.Validate;
@@ -110,15 +105,6 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 
 	public static final String BASE_RESOURCE_NAME = "resource";
 	private static final org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(BaseHapiFhirResourceDao.class);
-
-	@Inject
-	protected IInterceptorBroadcaster myInterceptorBroadcaster;
-
-	@Inject
-	private DaoRegistry myDaoRegistry;
-
-	@Inject
-	private IDeleteExpungeJobSubmitter myDeleteExpungeJobSubmitter;
 
 	private IInstanceValidatorModule myInstanceValidator;
 	private String myResourceName;
@@ -170,11 +156,6 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 		return myJpaStorageResourceParser;
 	}
 
-	@Override
-	protected IDeleteExpungeJobSubmitter getDeleteExpungeJobSubmitter() {
-		return myDeleteExpungeJobSubmitter;
-	}
-
 	/**
 	 * @deprecated Use {@link #create(T, RequestDetails)} instead
 	 */
@@ -221,13 +202,17 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 		//				theRequestDetails,
 		//				requestPartitionId));
 		// txn not supported
-		return doCreateForPost(
+		EntityTransaction txn = myEntityManager.getTransaction();
+		txn.begin();
+		DaoMethodOutcome retVal = doCreateForPost(
 				theResource,
 				theIfNoneExist,
 				thePerformIndexing,
 				theTransactionDetails,
 				theRequestDetails,
 				requestPartitionId);
+		txn.commit();
+		return retVal;
 	}
 
 	/**
@@ -553,7 +538,7 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 				.add(RequestDetails.class, theRequestDetails)
 				.addIfMatchesType(ServletRequestDetails.class, theRequestDetails)
 				.add(TransactionDetails.class, theTransactionDetails);
-		myInterceptorBroadcaster.callHooks(Pointcut.STORAGE_PRESTORAGE_RESOURCE_UPDATED, preStorageParams);
+		// // myInterceptorBroadcaster.callHooks(Pointcut.STORAGE_PRESTORAGE_RESOURCE_UPDATED, preStorageParams);
 
 		// Interceptor call: STORAGE_PRECOMMIT_RESOURCE_UPDATED
 		HookParams preCommitParams = new HookParams()
@@ -565,7 +550,7 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 				.add(
 						InterceptorInvocationTimingEnum.class,
 						theTransactionDetails.getInvocationTiming(Pointcut.STORAGE_PRECOMMIT_RESOURCE_UPDATED));
-		myInterceptorBroadcaster.callHooks(Pointcut.STORAGE_PRECOMMIT_RESOURCE_UPDATED, preCommitParams);
+		// myInterceptorBroadcaster.callHooks(Pointcut.STORAGE_PRECOMMIT_RESOURCE_UPDATED, preCommitParams);
 	}
 
 	private <MT extends IBaseMetaType> void doMetaDelete(
@@ -604,7 +589,7 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 				.add(RequestDetails.class, theRequestDetails)
 				.addIfMatchesType(ServletRequestDetails.class, theRequestDetails)
 				.add(TransactionDetails.class, theTransactionDetails);
-		myInterceptorBroadcaster.callHooks(Pointcut.STORAGE_PRESTORAGE_RESOURCE_UPDATED, preStorageParams);
+		// myInterceptorBroadcaster.callHooks(Pointcut.STORAGE_PRESTORAGE_RESOURCE_UPDATED, preStorageParams);
 
 		HookParams preCommitParams = new HookParams()
 				.add(IBaseResource.class, oldVersion)
@@ -616,7 +601,7 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 						InterceptorInvocationTimingEnum.class,
 						theTransactionDetails.getInvocationTiming(Pointcut.STORAGE_PRECOMMIT_RESOURCE_UPDATED));
 
-		myInterceptorBroadcaster.callHooks(Pointcut.STORAGE_PRECOMMIT_RESOURCE_UPDATED, preCommitParams);
+		// myInterceptorBroadcaster.callHooks(Pointcut.STORAGE_PRECOMMIT_RESOURCE_UPDATED, preCommitParams);
 	}
 
 	@Override
@@ -748,12 +733,7 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 		myResourceName = def.getName();
 
 		ourLog.debug("Starting resource DAO for type: {}", getResourceName());
-		Class clazz = IInstanceValidatorModule.class;
-		BeanManager bm = getApplicationContext();
-		Bean<T> bean = (Bean<T>) bm.getBeans(clazz).iterator().next();
-		CreationalContext<T> ctx = bm.createCreationalContext(bean);
-		myInstanceValidator = (IInstanceValidatorModule) bm.getReference(bean, clazz, ctx);
-
+		// ian: skipping instance validation support
 		super.start();
 	}
 
@@ -834,23 +814,8 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 				throw createResourceGoneException(entity);
 			}
 		}
-		// If the resolved fhir model is null, we don't need to run pre-access over or pre-show over it.
-		if (retVal != null) {
-			invokeStoragePreAccessResources(theId, theRequest, retVal);
-			retVal = invokeStoragePreShowResources(theRequest, retVal);
-		}
-
 		ourLog.debug("Processed read on {} in {}ms", theId.getValue(), w.getMillisAndRestart());
 		return retVal;
-	}
-
-	private T invokeStoragePreShowResources(RequestDetails theRequest, T retVal) {
-		retVal = invokeStoragePreShowResources(myInterceptorBroadcaster, theRequest, retVal);
-		return retVal;
-	}
-
-	private void invokeStoragePreAccessResources(IIdType theId, RequestDetails theRequest, T theResource) {
-		invokeStoragePreAccessResources(myInterceptorBroadcaster, theRequest, theId, theResource);
 	}
 
 	@Override
@@ -1076,7 +1041,6 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 					break;
 			}
 		}
-		myMetaTagSorter.sort(retVal);
 		return retVal;
 	}
 
@@ -1369,8 +1333,6 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 		}
 
 		FhirValidator validator = getContext().newValidator();
-		validator.setInterceptorBroadcaster(
-				CompositeInterceptorBroadcaster.newCompositeBroadcaster(myInterceptorBroadcaster, theRequest));
 		validator.registerValidatorModule(getInstanceValidator());
 		validator.registerValidatorModule(new IdChecker(theMode));
 

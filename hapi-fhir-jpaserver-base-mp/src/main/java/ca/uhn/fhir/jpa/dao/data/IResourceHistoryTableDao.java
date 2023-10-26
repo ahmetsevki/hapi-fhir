@@ -20,18 +20,18 @@
 package ca.uhn.fhir.jpa.dao.data;
 
 import ca.uhn.fhir.jpa.model.entity.ResourceHistoryTable;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 
 import java.util.*;
 
+@RequestScoped
 public class IResourceHistoryTableDao extends BaseDao<ResourceHistoryTable> {
 
-	@PersistenceContext
-	private EntityManager entityManager;
-
-	public IResourceHistoryTableDao() {
-		super(ResourceHistoryTable.class);
+	@Inject
+	public IResourceHistoryTableDao(EntityManager entityManager) {
+		super(ResourceHistoryTable.class, entityManager);
 	}
 	/**
 	 * This is really only intended for unit tests - There can be many versions of resources in
