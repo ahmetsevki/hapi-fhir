@@ -25,7 +25,9 @@ import ca.uhn.fhir.rest.api.Constants;
 import jakarta.persistence.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OptimisticLock;
+import org.hibernate.type.SqlTypes;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -90,7 +92,7 @@ public class ResourceHistoryTable extends BaseHasResource implements Serializabl
 	private byte[] myResource;
 
 	@Column(name = "RES_TEXT_VC", nullable = true)
-	@Lob
+	@JdbcTypeCode(SqlTypes.JSON)
 	@OptimisticLock(excluded = true) //
 	private String myResourceTextVc;
 
