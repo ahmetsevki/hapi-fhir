@@ -21,17 +21,14 @@ package ca.uhn.fhir.jpa.dao.data;
 
 import ca.uhn.fhir.jpa.model.entity.ResourceTable;
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
 
 import java.util.*;
 
 @RequestScoped
 public class IResourceTableDao extends BaseDao<ResourceTable> {
 
-	@Inject
-	public IResourceTableDao(EntityManager entityManager) {
-		super(ResourceTable.class, entityManager);
+	public IResourceTableDao() {
+		super(ResourceTable.class);
 	}
 
 	public List<Long> findIdsOfDeletedResources() {

@@ -46,6 +46,8 @@ import com.google.common.collect.MultimapBuilder;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.PersistenceContextType;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -111,8 +113,8 @@ public class IdHelperService implements IIdHelperService<JpaPid> {
 	@Inject
 	private FhirContext myFhirCtx;
 
-	@Inject
-	private EntityManager myEntityManager;
+	@PersistenceContext(type = PersistenceContextType.TRANSACTION)
+	protected EntityManager myEntityManager;
 
 	@Inject
 	private PartitionSettings myPartitionSettings;

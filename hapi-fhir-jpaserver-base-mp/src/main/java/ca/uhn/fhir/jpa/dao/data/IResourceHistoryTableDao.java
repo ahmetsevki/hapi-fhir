@@ -21,18 +21,16 @@ package ca.uhn.fhir.jpa.dao.data;
 
 import ca.uhn.fhir.jpa.model.entity.ResourceHistoryTable;
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
 
 import java.util.*;
 
 @RequestScoped
 public class IResourceHistoryTableDao extends BaseDao<ResourceHistoryTable> {
 
-	@Inject
-	public IResourceHistoryTableDao(EntityManager entityManager) {
-		super(ResourceHistoryTable.class, entityManager);
+	public IResourceHistoryTableDao() {
+		super(ResourceHistoryTable.class);
 	}
+
 	/**
 	 * This is really only intended for unit tests - There can be many versions of resources in
 	 * the real world, use a pageable query for real uses.

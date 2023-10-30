@@ -52,7 +52,6 @@ import ca.uhn.fhir.jpa.model.entity.ResourceTag;
 import ca.uhn.fhir.jpa.model.entity.TagDefinition;
 import ca.uhn.fhir.jpa.model.entity.TagTypeEnum;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
-import ca.uhn.fhir.jpa.util.IPersistenceContextProvider;
 import ca.uhn.fhir.model.api.IResource;
 import ca.uhn.fhir.model.api.ResourceMetadataKeyEnum;
 import ca.uhn.fhir.model.api.Tag;
@@ -84,6 +83,8 @@ import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.PersistenceContextType;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -150,9 +151,7 @@ public abstract class BaseHapiFhirDao<T extends IBaseResource> extends BaseStora
 	private static boolean ourValidationDisabledForUnitTest;
 	private static boolean ourDisableIncrementOnUpdateForUnitTest = false;
 
-	@Inject
-	private IPersistenceContextProvider myEntityManagerProvider;
-
+	@PersistenceContext(type = PersistenceContextType.TRANSACTION)
 	protected EntityManager myEntityManager;
 
 	@Inject
@@ -827,12 +826,6 @@ public abstract class BaseHapiFhirDao<T extends IBaseResource> extends BaseStora
 		myResourceHistoryTableDao = theResourceHistoryTableDao;
 	}
 
-	private String getConditionalCreateOrUpdateErrorMsg(CreateOrUpdateByMatch theCreateOrUpdate) {
-		return String.format(
-				"Failed to process conditional %s. " + "The supplied resource did not satisfy the conditional URL.",
-				theCreateOrUpdate.name().toLowerCase());
-	}
-
 	@SuppressWarnings("unchecked")
 	@Override
 	public ResourceTable updateEntity(
@@ -1443,7 +1436,6 @@ public abstract class BaseHapiFhirDao<T extends IBaseResource> extends BaseStora
 
 	@PostConstruct
 	public void start() {
-		this.myEntityManager = myEntityManagerProvider.getEntityManager();
 		// nothing yet
 	}
 

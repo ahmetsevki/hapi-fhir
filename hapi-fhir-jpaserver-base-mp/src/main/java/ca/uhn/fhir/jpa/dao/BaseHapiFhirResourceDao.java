@@ -72,9 +72,9 @@ import ca.uhn.fhir.validation.ValidationOptions;
 import ca.uhn.fhir.validation.ValidationResult;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.PostConstruct;
-import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
+import jakarta.transaction.Transactional;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseCoding;
 import org.hl7.fhir.instance.model.api.IBaseMetaType;
@@ -95,7 +95,6 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
-import javax.transaction.Transactional;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -159,6 +158,7 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 	/**
 	 * @deprecated Use {@link #create(T, RequestDetails)} instead
 	 */
+	@Transactional
 	@Override
 	public DaoMethodOutcome create(final T theResource) {
 		return create(theResource, null, true, null, new TransactionDetails());
@@ -202,8 +202,8 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 		//				theRequestDetails,
 		//				requestPartitionId));
 		// txn not supported
-		EntityTransaction txn = myEntityManager.getTransaction();
-		txn.begin();
+		//		EntityTransaction txn = myEntityManager.getTransaction();
+		//		txn.begin();
 		DaoMethodOutcome retVal = doCreateForPost(
 				theResource,
 				theIfNoneExist,
@@ -211,7 +211,7 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 				theTransactionDetails,
 				theRequestDetails,
 				requestPartitionId);
-		txn.commit();
+		//		txn.commit();
 		return retVal;
 	}
 
@@ -775,6 +775,7 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 	 * @deprecated Use {@link #read(IIdType, RequestDetails)} instead
 	 */
 	@Override
+	@Transactional
 	public T read(IIdType theId) {
 		return read(theId, null);
 	}
@@ -1065,6 +1066,7 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 	 * @deprecated Use {@link #update(T, RequestDetails)} instead
 	 */
 	@Override
+	@Transactional
 	public DaoMethodOutcome update(T theResource) {
 		return update(theResource, null, null);
 	}
