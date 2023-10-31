@@ -20,11 +20,12 @@
 package ca.uhn.fhir.jpa.config;
 
 import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
+import ca.uhn.fhir.jpa.dao.JpaStorageResourceParser;
+import ca.uhn.fhir.jpa.dao.index.IdHelperService;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Named;
 
-@RequestScoped
 public class JpaConfig {
 	public static final String JPA_VALIDATION_SUPPORT_CHAIN = "myJpaValidationSupportChain";
 	public static final String JPA_VALIDATION_SUPPORT = "myJpaValidationSupport";
@@ -45,13 +46,19 @@ public class JpaConfig {
 		return new DaoRegistry();
 	}
 
+	// Spring version:
+	//	@Bean
+	//	public IJpaStorageResourceParser jpaStorageResourceParser() {
+	//		return new JpaStorageResourceParser();
+	//	}
+	// MicroProfile version:
+	@RequestScoped
+	public static class IJpaStorageResourceParserBean extends JpaStorageResourceParser {}
+
 	/* **************************************************************** *
 	 * Prototype Beans Below (@Dependent)                               *
 	 * **************************************************************** */
 
-	//	@Produces
-	//	@RequestScoped
-	//	public IdHelperService idHelperService() {
-	//		return new IdHelperService();
-	//	}
+	@RequestScoped
+	public static class IdHelperServiceBean extends IdHelperService {}
 }

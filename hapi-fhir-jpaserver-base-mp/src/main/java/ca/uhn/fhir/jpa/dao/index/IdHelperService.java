@@ -43,7 +43,6 @@ import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
-import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -96,7 +95,6 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  * right method here is important.
  * </p>
  */
-@RequestScoped
 public class IdHelperService implements IIdHelperService<JpaPid> {
 	public static final Predicate[] EMPTY_PREDICATE_ARRAY = new Predicate[0];
 	public static final String RESOURCE_PID = "RESOURCE_PID";

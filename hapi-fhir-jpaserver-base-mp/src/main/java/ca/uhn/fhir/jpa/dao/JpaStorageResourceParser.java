@@ -50,7 +50,6 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.parser.LenientErrorHandler;
 import ca.uhn.fhir.rest.api.Constants;
 import ca.uhn.fhir.util.MetaUtil;
-import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IAnyResource;
@@ -72,7 +71,6 @@ import static ca.uhn.fhir.jpa.dao.BaseHapiFhirDao.decodeResource;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
-@RequestScoped
 public class JpaStorageResourceParser implements IJpaStorageResourceParser {
 	public static final LenientErrorHandler LENIENT_ERROR_HANDLER = new LenientErrorHandler(false).disableAllErrors();
 	private static final Logger ourLog = LoggerFactory.getLogger(JpaStorageResourceParser.class);
