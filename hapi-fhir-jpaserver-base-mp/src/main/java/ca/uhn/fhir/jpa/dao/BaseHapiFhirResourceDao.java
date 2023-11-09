@@ -201,9 +201,7 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 		//				theTransactionDetails,
 		//				theRequestDetails,
 		//				requestPartitionId));
-		// txn not supported
-		//		EntityTransaction txn = myEntityManager.getTransaction();
-		//		txn.begin();
+		// use @Transactional rather than this
 		DaoMethodOutcome retVal = doCreateForPost(
 				theResource,
 				theIfNoneExist,
@@ -211,7 +209,6 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 				theTransactionDetails,
 				theRequestDetails,
 				requestPartitionId);
-		//		txn.commit();
 		return retVal;
 	}
 
@@ -538,7 +535,7 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 				.add(RequestDetails.class, theRequestDetails)
 				.addIfMatchesType(ServletRequestDetails.class, theRequestDetails)
 				.add(TransactionDetails.class, theTransactionDetails);
-		// // myInterceptorBroadcaster.callHooks(Pointcut.STORAGE_PRESTORAGE_RESOURCE_UPDATED, preStorageParams);
+		// myInterceptorBroadcaster.callHooks(Pointcut.STORAGE_PRESTORAGE_RESOURCE_UPDATED, preStorageParams);
 
 		// Interceptor call: STORAGE_PRECOMMIT_RESOURCE_UPDATED
 		HookParams preCommitParams = new HookParams()
@@ -797,7 +794,7 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 		//			.withTransactionDetails(transactionDetails)
 		//			.withRequestPartitionId(requestPartitionId)
 		//			.execute(() -> doReadInTransaction(theId, theRequest, theDeletedOk, requestPartitionId));
-		// txn not supported
+		// instead have @Transactional annotation on caller (line 775)
 		return doReadInTransaction(theId, theRequest, theDeletedOk, requestPartitionId);
 	}
 
@@ -1140,6 +1137,7 @@ public abstract class BaseHapiFhirResourceDao<T extends IBaseResource> extends B
 					requestPartitionId);
 		}
 
+		// Used @Transactional
 		// Execute the update in a retryable transaction
 		//		return myTransactionService
 		//			.withRequest(theRequest)

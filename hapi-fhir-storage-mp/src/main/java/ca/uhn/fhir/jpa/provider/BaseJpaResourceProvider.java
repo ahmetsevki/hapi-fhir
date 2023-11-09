@@ -27,13 +27,17 @@ public abstract class BaseJpaResourceProvider<T extends IBaseResource> extends A
 		myDao = theDao;
 	}
 
+	//	@Create
+	//	public MethodOutcome create(@ResourceParam T theResource, @ConditionalUrlParam String theConditional) {
+	//		if (theConditional != null) {
+	//			throw new RuntimeException("not implemented");
+	//		} else {
+	//			return getDao().create(theResource);
+	//		}
+	//	}
 	@Create
-	public MethodOutcome create(@ResourceParam T theResource, @ConditionalUrlParam String theConditional) {
-		if (theConditional != null) {
-			throw new RuntimeException("not implemented");
-		} else {
-			return getDao().create(theResource);
-		}
+	public MethodOutcome create(@ResourceParam T theResource) {
+		return getDao().create(theResource);
 	}
 
 	@Update

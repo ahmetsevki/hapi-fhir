@@ -346,7 +346,7 @@ public abstract class BaseHapiFhirDao<T extends IBaseResource> extends BaseStora
 		return myContext;
 	}
 
-	// ian: Is this needed?
+	// ian: Is this needed - I am injecting using @Inject
 	//	@Inject
 	//	public void setContext(FhirContext theContext) {
 	//		super.myFhirContext = theContext;
@@ -885,8 +885,8 @@ public abstract class BaseHapiFhirDao<T extends IBaseResource> extends BaseStora
 			// CREATE or UPDATE
 			entity.setDeleted(null);
 			// TODO: is this IF statement always true? Try removing it
-			// IAN: thePerformIndexing is not serch indexing, it is creating the hashcode for the entity and encoding
-			// it.
+			// IAN: thePerformIndexing is not only search indexing,
+			// it is creating the hashcode for the entity and encoding it
 			if (thePerformIndexing || theEntity.getVersion() == 1) {
 
 				RequestPartitionId requestPartitionId;
@@ -899,6 +899,8 @@ public abstract class BaseHapiFhirDao<T extends IBaseResource> extends BaseStora
 				}
 
 				// Actually persist the ResourceTable and ResourceHistoryTable entities
+				// IAN: populateResourceIntoEntity:thePerformIndexing has to be true for it to create hash code
+				// this is an overloaded parameter :(
 				changed = populateResourceIntoEntity(theTransactionDetails, theRequest, theResource, entity, true);
 
 				if (theForceUpdate) {
