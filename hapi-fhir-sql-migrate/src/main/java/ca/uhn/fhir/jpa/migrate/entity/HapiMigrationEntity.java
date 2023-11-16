@@ -45,7 +45,6 @@ public class HapiMigrationEntity {
 	public static final String INITIAL_RECORD_DESCRIPTION = "<< HAPI FHIR Schema History table created >>";
 	public static final String INITIAL_RECORD_SCRIPT = "HAPI FHIR";
 
-
 	@Id
 	@GenericGenerator(
 			name = "SEQ_FLY_HFJ_MIGRATION",
